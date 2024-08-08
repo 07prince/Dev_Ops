@@ -1,0 +1,68 @@
+pipeline {
+  agent none
+  stages {
+    stage('Back-end') {
+      agent {
+        docker { image 'maven:3.8.1-adoptopenjdk-11' }
+      }
+      steps {
+        sh '''
+          # Create Hello World Java application
+          mkdir -p src/main/java/com/example
+          cat <<EOF > src/main/java/com/example/HelloWorld.java
+          package com.example;
+
+          public class HelloWorld {
+              public static void main(String[] args) {
+                  System.out.println("Hello, World!");
+              }
+          }
+          EOF
+
+          # Create Maven POM file
+          cat <<EOF > pom.xml
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+
+              <groupId>com.example</groupId>
+              <artifactId>helloworld</artifactId>
+              <version>1.0-SNAPSHOT</version>
+              <properties>
+                  <maven.compiler.source>11</maven.compiler.source>
+                  <maven.compiler.target>11</maven.compiler.target>
+              </properties>
+              <dependencies>
+                  <!-- No dependencies for this simple example -->
+              </dependencies>
+          </project>
+          EOF
+
+          # Build and run the Java application
+          mvn clean package
+          java -cp target/helloworld-1.0-SNAPSHOT.jar com.example.HelloWorld
+        '''
+      }
+    }
+    stage('Front-end') {
+      agent {
+        docker { image 'node:16-alpine' }
+      }
+      steps {
+        sh '''
+          # Create Hello World Node.js application
+          mkdir hello-world
+          cd hello-world
+          npm init -y
+          cat <<EOF > index.js
+          console.log("Hello, World!");
+          EOF
+
+          # Run the Node.js application
+          node index.js
+        '''
+      }
+    }
+  }
+}
